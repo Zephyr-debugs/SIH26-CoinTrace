@@ -6,7 +6,7 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 
 ---
 
-## Phase 0 — Project Setup (Day 0–1)
+## Phase 0 — Project Setup
 
 **Goal:** A working, version-controlled Python project skeleton, nothing functional yet.
 
@@ -31,7 +31,7 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 
 ---
 
-## Phase 1 — Synthetic Dataset Generation (Day 1–3)
+## Phase 1 — Synthetic Dataset Generation
 
 **Goal:** Labeled, typology-injected ground-truth dataset to build and evaluate everything else against.
 
@@ -47,7 +47,7 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 
 ---
 
-## Phase 2 — Ingestion & Normalization Layer (Day 3–5)
+## Phase 2 — Ingestion & Normalization Layer
 
 **Goal:** Turn raw CSV/JSON/XML into one canonical, validated schema.
 
@@ -58,7 +58,7 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 
 ---
 
-## Phase 3 — Graph Construction & Entity Clustering (Day 5–8)
+## Phase 3 — Graph Construction & Entity Clustering
 
 **Goal:** Build the multi-layer graph and collapse addresses into real-world entities.
 
@@ -72,7 +72,7 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 
 ---
 
-## Phase 4 — Feature Engineering (Day 8–9)
+## Phase 4 — Feature Engineering
 
 **Goal:** Per-entity feature vectors for the ML layer.
 
@@ -83,7 +83,7 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 
 ---
 
-## Phase 5 — AI/ML Detection Ensemble (Day 9–13)
+## Phase 5 — AI/ML Detection Ensemble
 
 **Goal:** A single calibrated risk score per entity, from complementary weak signals.
 
@@ -96,7 +96,7 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 
 ---
 
-## Phase 6 — Explainability Layer (Day 13–15)
+## Phase 6 — Explainability Layer
 
 **Goal:** Every alert is traceable, not a black-box number.
 
@@ -108,7 +108,7 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 
 ---
 
-## Phase 7 — Dashboard (Day 15–18)
+## Phase 7 — Dashboard
 
 **Goal:** The investigator-facing surface.
 
@@ -119,7 +119,7 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 
 ---
 
-## Phase 8 — Validation (Day 18–20)
+## Phase 8 — Validation
 
 **Goal:** Quantified, defensible performance numbers for the write-up/demo.
 
@@ -130,7 +130,7 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 
 ---
 
-## Phase 9 — Packaging & Polish (Day 20–21+)
+## Phase 9 — Packaging & Polish
 
 **Goal:** Reproducible, demo-ready, and (if relevant) presentation-ready.
 
@@ -138,18 +138,6 @@ This roadmap translates the proposal's methodology into a buildable, sequenced p
 - README with setup instructions, architecture diagram, sample screenshots
 - Trim dependencies, pin versions, confirm it runs clean in a fresh venv
 - (Optional, stretch) Dockerized Neo4j swap-in to demonstrate the pluggable graph backend
-
----
-
-## Suggested Build Order Priorities (if time-constrained)
-
-If time runs short, the priority order for a compelling demo is:
-1. Synthetic data + ingestion (Phase 1–2) — nothing works without this
-2. Graph + one working detector (Isolation Forest) + basic scoring (Phase 3, part of 5)
-3. A minimal dashboard showing ranked alerts (part of Phase 7)
-4. Then layer back in: autoencoder, Louvain, motif detectors, SHAP, evidence subgraphs, validation metrics
-
-This ensures there's always an end-to-end working demo, even if individual layers are still shallow.
 
 ---
 
