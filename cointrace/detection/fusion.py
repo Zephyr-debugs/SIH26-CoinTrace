@@ -48,6 +48,10 @@ def fit_logistic_weights(score_frames: dict[str, pd.Series], labels: pd.Series):
     common_idx = X.index.intersection(labels.index)
     X, y = X.loc[common_idx], labels.loc[common_idx]
 
-    model = LogisticRegression()
+    # class_weight="balanced" matters here specifically because analyst
+    # feedback is almost always lopsided (far more confirmed-benign
+    # clicks than confirmed-illicit ones), so an unweighted fit would
+    # just learn to ignore the minority class.
+    model = LogisticRegression(class_weight="balanced")
     model.fit(X, y)
     return model

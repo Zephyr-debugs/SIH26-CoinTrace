@@ -12,7 +12,9 @@ Usage:
 """
 from __future__ import annotations
 
+import json
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
@@ -82,16 +84,91 @@ def main():
     print(f"  ({tp} true positives, {fp} false positives, {fn} false negatives)")
     print()
 
+    precision_at_k = {}
     print("Precision at top-K:")
     for k in (10, 25, 50, 100):
         topk = merged.head(k)
-        p_at_k = topk["is_illicit"].mean()
+        p_at_k = float(topk["is_illicit"].mean()) if len(topk) else 0.0
+        precision_at_k[k] = p_at_k
         print(f"  P@{k}: {p_at_k:.3f}")
     print()
 
     print("Recall by typology (among flagged illicit true entities):")
     illicit = merged[merged["is_illicit"]]
-    print(illicit.groupby("typology")["is_alert"].mean().to_string())
+    recall_by_typology = illicit.groupby("typology")["is_alert"].mean()
+    print(recall_by_typology.to_string())
+
+    # --- Phase 8 (cont.): persist this run as a report file, so
+    # precision/recall have a permanent artifact instead of only living
+    # in terminal scrollback. Written every run as of/at the timestamp
+    # below, so re-running after a feedback-driven reweight (Phase 9)
+    # naturally produces a fresh before/after comparison.
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    report = {
+        "generated_at": generated_at,
+        "risk_alert_threshold": config.RISK_ALERT_THRESHOLD,
+        "n_entities_scored": int(len(merged)),
+        "n_entities_true_illicit": int(y_true.sum()),
+        "n_entities_flagged": int(y_pred.sum()),
+        "true_positives": tp,
+        "false_positives": fp,
+        "false_negatives": fn,
+        "precision": round(precision, 4),
+        "recall": round(recall, 4),
+        "f1": round(f1, 4),
+        "precision_at_k": {str(k): round(v, 4) for k, v in precision_at_k.items()},
+        "recall_by_typology": {
+            str(k): round(float(v), 4) for k, v in recall_by_typology.items()
+        },
+        "fusion_weights_used": (
+            "learned_from_feedback" if config.LEARNED_WEIGHTS_JSON.exists()
+            else "default_config_weights"
+        ),
+    }
+
+    config.PIPELINE_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    json_path = config.PIPELINE_OUTPUT_DIR / "evaluation_report.json"
+    json_path.write_text(json.dumps(report, indent=2))
+
+    md_lines = [
+        "# CoinTrace evaluation report",
+        "",
+        f"Generated: {generated_at}",
+        f"Alert threshold: {config.RISK_ALERT_THRESHOLD}",
+        f"Fusion weights used: {report['fusion_weights_used']}",
+        "",
+        "## Overall",
+        "",
+        "| Metric | Value |",
+        "|---|---|",
+        f"| Precision | {precision:.3f} |",
+        f"| Recall | {recall:.3f} |",
+        f"| F1 | {f1:.3f} |",
+        f"| True positives | {tp} |",
+        f"| False positives | {fp} |",
+        f"| False negatives | {fn} |",
+        "",
+        "## Precision at top-K",
+        "",
+        "| K | Precision@K |",
+        "|---|---|",
+    ]
+    md_lines += [f"| {k} | {v:.3f} |" for k, v in precision_at_k.items()]
+    md_lines += [
+        "",
+        "## Recall by typology",
+        "",
+        "(share of true illicit entities of that typology that were flagged as alerts)",
+        "",
+        "| Typology | Recall |",
+        "|---|---|",
+    ]
+    md_lines += [f"| {t} | {v:.3f} |" for t, v in recall_by_typology.items()]
+    md_path = config.PIPELINE_OUTPUT_DIR / "evaluation_report.md"
+    md_path.write_text("\n".join(md_lines) + "\n")
+
+    print(f"\nSaved report -> {json_path}")
+    print(f"Saved report -> {md_path}")
 
 
 if __name__ == "__main__":

@@ -66,6 +66,14 @@ FUSION_WEIGHTS = {
 
 RISK_ALERT_THRESHOLD = 0.6   # entities above this are surfaced as "alerts" by default
 
+# ---- Phase 9: analyst feedback / retraining -------------------------------
+FEEDBACK_CSV = PIPELINE_OUTPUT_DIR / "feedback.csv"
+LEARNED_WEIGHTS_JSON = PIPELINE_OUTPUT_DIR / "learned_fusion_weights.json"
+# Minimum distinct labeled entities (with both classes present) before
+# fusion weights are re-fit from feedback instead of using the static
+# FUSION_WEIGHTS above.
+MIN_FEEDBACK_FOR_RETRAIN = 8
+
 # ---- Explainability -------------------------------------------------------
 EVIDENCE_SUBGRAPH_HOPS = 2
 TOP_N_FOR_EAGER_EXPLANATION = 50   # only precompute SHAP/evidence for top-N ranked entities

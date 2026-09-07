@@ -23,6 +23,7 @@ from cointrace.ingestion.pipeline import ingest_file
 from cointrace.graph.builder import build_graph
 from cointrace.graph.clustering import build_entity_clusters
 from cointrace.explain.evidence import extract_evidence_subgraph, plain_language_explanation
+from cointrace.feedback.store import latest_labels_only, load_feedback, record_feedback
 
 st.set_page_config(page_title="CoinTrace", layout="wide")
 
@@ -174,6 +175,17 @@ def main():
         selected_typologies = st.multiselect("Typology filter", typology_options)
         show_all_columns = st.checkbox("Show all feature columns", value=False)
 
+        st.divider()
+        st.header("Feedback / learning")
+        n_labeled = len(latest_labels_only(load_feedback()))
+        st.caption(f"{n_labeled} entities labeled so far.")
+        if config.LEARNED_WEIGHTS_JSON.exists():
+            st.caption("Fusion weights have been re-fit from feedback at least once — "
+                       "current ranking uses learned weights, not the static defaults.")
+        else:
+            st.caption(f"Need {config.MIN_FEEDBACK_FOR_RETRAIN} labeled entities "
+                       "(both classes) before weights start adapting.")
+
     filtered = ranked[ranked["risk_score"] >= min_score]
     if selected_typologies:
         pattern = "|".join(selected_typologies)
@@ -223,6 +235,17 @@ def main():
             round_trip_time_mean_seconds=float(row.get("round_trip_time_mean", 0)),
         )
         st.info(explanation)
+
+        st.markdown("**Was this call right?** Your answer is saved locally and used to "
+                     "re-fit the scoring weights next time the pipeline runs — see "
+                     "`cointrace/feedback/`.")
+        fb_cols = st.columns([1, 1, 3])
+        if fb_cols[0].button("✅ Confirm illicit", key=f"fb_illicit_{selected_entity}"):
+            record_feedback(selected_entity, is_illicit=True)
+            st.success(f"Recorded {selected_entity} as confirmed illicit.")
+        if fb_cols[1].button("❌ False positive", key=f"fb_benign_{selected_entity}"):
+            record_feedback(selected_entity, is_illicit=False)
+            st.success(f"Recorded {selected_entity} as a false positive.")
 
         with st.expander("Evidence subgraph (click to load)"):
             g, wallet_to_entity = load_graph_and_clusters()

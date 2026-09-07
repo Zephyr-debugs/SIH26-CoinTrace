@@ -31,6 +31,8 @@ from cointrace.detection.motifs import (
     detect_peel_chain, detect_fan_pattern, detect_rapid_pass_through, combine_motif_scores,
 )
 from cointrace.detection.fusion import fuse_scores
+from cointrace.feedback.retrain import load_learned_weights, retrain_from_feedback
+from cointrace.feedback.store import latest_labels_only, load_feedback
 
 
 def main():
@@ -74,7 +76,17 @@ def main():
     community_score = entity_community_score(wallet_to_entity, node_to_community)
 
     print("[5/6] Fusing scores...")
-    result = fuse_scores(scores)
+    learned_weights = load_learned_weights()
+    n_labeled = len(latest_labels_only(load_feedback()))
+    if learned_weights:
+        print(f"      using feedback-learned weights "
+              f"(fit on {n_labeled} analyst-labeled entities so far): {learned_weights}")
+        result = fuse_scores(scores, weights=learned_weights)
+    else:
+        print(f"      using default config.FUSION_WEIGHTS "
+              f"({n_labeled} analyst-labeled entities so far, "
+              f"need {config.MIN_FEEDBACK_FOR_RETRAIN} of both classes to start learning)")
+        result = fuse_scores(scores)
     result = result.join(feat_df, how="left")
     result = result.join(motif_reasons, how="left")
     result = result.join(community_score, how="left")
@@ -92,6 +104,19 @@ def main():
     cols = ["risk_score", "isolation_forest_score", "motif_score", "motif_reasons"]
     cols = [c for c in cols if c in result.columns]
     print(result[cols].head(10).to_string())
+
+    # Phase 9: if enough analyst corrections have accumulated (dashboard
+    # "Confirm illicit" / "Mark false positive" buttons, or
+    # scripts/record_feedback.py), re-fit the fusion weights against them
+    # now, so the NEXT run of this script uses them automatically. This
+    # is the offline "learn from its mistakes" loop - see
+    # cointrace/feedback/retrain.py for what it actually does and why
+    # it's not "one-shot learning".
+    new_weights = retrain_from_feedback(scores)
+    if new_weights:
+        print(f"\n[feedback] Re-fit fusion weights from {n_labeled} analyst corrections: "
+              f"{new_weights}\n           Saved to {config.LEARNED_WEIGHTS_JSON} - "
+              f"the next run will use these instead of the defaults.")
 
 
 if __name__ == "__main__":
