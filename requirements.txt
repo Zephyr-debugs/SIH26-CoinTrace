@@ -1,0 +1,23 @@
+# Core data handling
+pandas>=2.2
+numpy>=1.26
+
+# Graph
+networkx>=3.2          # includes native louvain_communities() since 3.0
+
+# ML detectors
+scikit-learn>=1.4
+torch>=2.2              # CPU build is fine: pip install torch --index-url https://download.pytorch.org/whl/cpu
+
+# Explainability
+shap>=0.45
+
+# GeoIP enrichment (optional - code degrades gracefully without a .mmdb file)
+geoip2>=4.8
+
+# Dashboard
+streamlit>=1.32
+streamlit-agraph>=0.0.45
+
+# Dev / testing
+pytest>=8.0

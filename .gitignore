@@ -1,0 +1,15 @@
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.idea/
+
+# generated data & downloaded GeoIP databases (large / regenerable)
+data/synthetic/*
+!data/synthetic/.gitkeep
+data/geoip/*.mmdb
+data/processed/
+data/pipeline_output/
+
+.DS_Store
